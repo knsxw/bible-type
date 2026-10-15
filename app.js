@@ -13,12 +13,76 @@ const status=$('#source-status');
 function message(text){status.textContent=text;status.hidden=!text;}
 function controls(){
   input.disabled=busy||!current||done;
-  for(const el of document.querySelectorAll('[data-mode],[data-duration],#book,#next,#restart,#again'))el.disabled=busy||!configured;
+  for(const el of document.querySelectorAll('[data-mode],[data-duration],#book,#book-toggle,#next,#restart,#again'))el.disabled=busy||!configured;
 }
 function fillBooks(){
   $('#book').replaceChildren(new Option('all books','all'));
   for(const book of catalog)$('#book').append(new Option(book.name,book.id));
+  syncBookLabel();
 }
+// Searchable book picker: keep native selection as the single source of truth.
+let bookMatches=[],activeBook=-1;
+function syncBookLabel(){
+  $('#book-selected').textContent=$('#book').selectedOptions[0]?.textContent||'all books';
+  $('#book-toggle').setAttribute('aria-label','Choose a Bible book: '+$('#book-selected').textContent);
+}
+function closeBookMenu(restoreFocus=false){
+  $('#book-menu').hidden=true;
+  $('#book-toggle').setAttribute('aria-expanded','false');
+  $('#book-search').setAttribute('aria-expanded','false');
+  $('#book-search').removeAttribute('aria-activedescendant');
+  if(restoreFocus)$('#book-toggle').focus();
+}
+function highlightBook(index){
+  activeBook=index;
+  const options=[...$('#book-options').children];
+  options.forEach((option,i)=>option.classList.toggle('active',i===index));
+  if(options[index]){
+    $('#book-search').setAttribute('aria-activedescendant',options[index].id);
+    options[index].scrollIntoView({block:'nearest'});
+  }else $('#book-search').removeAttribute('aria-activedescendant');
+}
+function chooseBook(id){
+  if(busy||!configured)return;
+  const changed=$('#book').value!==id;
+  $('#book').value=id;syncBookLabel();closeBookMenu(true);
+  if(changed)$('#book').dispatchEvent(new Event('change'));
+}
+function renderBookOptions(){
+  const query=$('#book-search').value.trim().toLowerCase();
+  bookMatches=[{id:'all',name:'all books',testament:'Every book'},...catalog].filter(book=>book.name.toLowerCase().includes(query));
+  $('#book-options').replaceChildren();
+  for(const [index,book] of bookMatches.entries()){
+    const option=document.createElement('div');option.id='book-option-'+index;option.className='book-option';
+    option.setAttribute('role','option');option.setAttribute('aria-selected',String($('#book').value===book.id));
+    const label=document.createElement('span');label.textContent=book.name;
+    const detail=document.createElement('small');detail.textContent=$('#book').value===book.id?'✓':book.testament;
+    option.append(label,detail);option.onpointerdown=event=>event.preventDefault();option.onclick=()=>chooseBook(book.id);
+    $('#book-options').append(option);
+  }
+  $('#book-empty').hidden=bookMatches.length>0;
+  const selected=bookMatches.findIndex(book=>book.id===$('#book').value);
+  highlightBook(bookMatches.length?Math.max(0,selected):-1);
+}
+function openBookMenu(){
+  if($('#book-toggle').disabled)return;
+  $('#book-menu').hidden=false;$('#book-toggle').setAttribute('aria-expanded','true');
+  $('#book-search').setAttribute('aria-expanded','true');$('#book-search').value='';
+  renderBookOptions();$('#book-search').focus();
+}
+$('#book-toggle').onclick=()=>$('#book-menu').hidden?openBookMenu():closeBookMenu(true);
+$('#book-toggle').onkeydown=event=>{if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();openBookMenu();}};
+$('#book-search').oninput=renderBookOptions;
+$('#book-search').onkeydown=event=>{
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeBookMenu(true);}
+  else if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+    event.preventDefault();if(bookMatches.length)highlightBook((activeBook+(event.key==='ArrowDown'?1:-1)+bookMatches.length)%bookMatches.length);
+  }else if(event.key==='Enter'){
+    event.preventDefault();if(bookMatches[activeBook])chooseBook(bookMatches[activeBook].id);
+  }else if(event.key==='Tab')closeBookMenu();
+};
+document.addEventListener('pointerdown',event=>{if(!$('#book-picker').contains(event.target))closeBookMenu();});
+$('#book-picker').addEventListener('focusout',event=>{if(!$('#book-picker').contains(event.relatedTarget))closeBookMenu();});
 const random=list=>list[Math.floor(Math.random()*list.length)];
 async function pick(){
   const choices=catalog.filter(b=>$('#book').value==='all'||b.id===$('#book').value);
@@ -78,14 +142,14 @@ input.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','ArrowUp',
 function nextVerse(){loadVerse();}
 $('#next').onclick=nextVerse;$('#again').onclick=nextVerse;$('#restart').onclick=()=>{reset();input.focus();};
 document.addEventListener('keydown',event=>{
- if($('dialog[open]')||busy||!current)return;
+ if($('dialog[open]')||!$('#book-menu').hidden||busy||!current)return;
  if(event.key==='Escape'){event.preventDefault();reset();input.focus();}
  else if(event.key==='Enter'&&event.altKey){event.preventDefault();nextVerse();}
  else if(!done&&event.key.length===1&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&document.activeElement===document.body)input.focus();
 });
 for(const button of document.querySelectorAll('[data-mode]'))button.onclick=()=>{mode=button.dataset.mode;for(const b of document.querySelectorAll('[data-mode]')){b.classList.toggle('selected',b===button);b.setAttribute('aria-pressed',String(b===button));}$('#durations').hidden=mode!=='time';reset();};
 for(const button of document.querySelectorAll('[data-duration]')){button.setAttribute('aria-pressed',String(Number(button.dataset.duration)===duration));button.onclick=()=>{duration=Number(button.dataset.duration);for(const b of document.querySelectorAll('[data-duration]')){b.classList.toggle('selected',b===button);b.setAttribute('aria-pressed',String(b===button));}reset();};}
-$('#book').onchange=()=>{current=null;clearInterval(timer);started=null;$('#passage').replaceChildren();$('#verse-readable').textContent='';$('#reference').textContent='';$('#reference').removeAttribute('href');$('#word-count').textContent='';$('#copyright').textContent='';loadVerse();};
+$('#book').onchange=()=>{syncBookLabel();current=null;clearInterval(timer);started=null;$('#passage').replaceChildren();$('#verse-readable').textContent='';$('#reference').textContent='';$('#reference').removeAttribute('href');$('#word-count').textContent='';$('#copyright').textContent='';loadVerse();};
 function theme(light){document.body.classList.toggle('light',light);$('#theme').textContent=light?'☾':'☼';$('#theme').setAttribute('aria-label',light?'Switch to dark theme':'Switch to light theme');save('bible-type-light',light);}
 theme(read('bible-type-light',false)===true);$('#theme').onclick=()=>theme(!document.body.classList.contains('light'));
 function libraryCard(title,description,action){
@@ -112,7 +176,7 @@ async function chapterVerses(book,chapter){
     if(!configured)throw new Error('NIV text is not connected yet. Set up API.Bible access to practice verses from this chapter.');
     const list=await getJSON('/api/verses?chapter='+encodeURIComponent(chapter.id));
     if(version!==libraryVersion)return;$('#verse-list').replaceChildren();
-    for(const verse of list)libraryCard(verse.ref||verse.id,'Practice this verse',()=>{if(busy)return;$('#book').value=book.id;$('#library').close();loadVerse(verse.id);});
+    for(const verse of list)libraryCard(verse.ref||verse.id,'Practice this verse',()=>{if(busy)return;$('#book').value=book.id;syncBookLabel();$('#library').close();loadVerse(verse.id);});
     if(!list.length)$('#verse-list').textContent='No verses available in this chapter.';
   }catch(error){if(version===libraryVersion)$('#verse-list').textContent=error.message;}
 }
