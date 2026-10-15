@@ -1,47 +1,41 @@
-# Bible Type
+# Bible Type — NIV
 
-A calm, responsive Bible-verse typing website inspired by the focused practice experience of Monkeytype. Built with HTML, CSS, and native JavaScript modules. No dependencies, API keys, account, or build step.
+A Bible-verse typing site with a 66-book library, chapter/verse browsing, single-verse and timed practice, live speed and accuracy, dark/light themes, and local score history.
 
-## Run locally
+## Connect NIV
 
-Requires Node.js 18 or newer. In the VS Code terminal:
+NIV text is fetched on demand from API.Bible. No NIV corpus is bundled, and no other translation is substituted. Without credentials, the book/chapter browser works and typing displays a setup message.
 
-```sh
-npm run dev
-```
+1. Create or use an account at https://api.bible/ and enable an English New International Version edition for this application. Access and permitted uses depend on your provider agreement. Check that your intended typing-practice use is covered.
+2. Copy `.env.example` to `.env` in this project.
+3. In VS Code, enter your `API_BIBLE_KEY` and `NIV_BIBLE_ID` into `.env`. Copy the exact edition ID from your API.Bible dashboard. Do not paste your key into chat or into browser code.
+4. Run `npm run dev` and open http://localhost:5173. Restart the server after changing `.env`.
 
-Open http://localhost:5173. To use another port: `PORT=3000 npm run dev`.
+Node.js 18+ is required. No package installation or build step is needed. Run `npm test` for automated checks.
 
-```sh
-npm test
-```
+The server checks that the configured Bible identifies itself as English NIV, fetches its book and chapter catalog, and requires all 66 canonical books. Verse IDs are fetched from the provider so omitted/combined verses follow that edition rather than an assumed numbering scheme. Random practice selects a book, chapter, then an available verse; it is not uniformly weighted across every verse in the Bible.
 
-## Features
+## Practice
 
-- 21 curated World English Bible Classic verses from Psalms, Proverbs, John, and 1 Corinthians.
-- Single-verse and 30/60/120-second practice; timed mode continues through verses.
-- Per-character feedback, live WPM and accuracy, elapsed/remaining time, and results.
-- Searchable verse library and book filter.
-- Dark/light theme and the last 100 results saved in localStorage on this browser.
-- Responsive layout, mobile keyboard input, keyboard navigation, reduced-motion support.
-- Escape restarts; Alt+Enter selects the next verse. Paste/drop is disabled during practice.
+Choose a book filter or browse Verse library → book → chapter → verse. Single-verse practice finishes when every character position is filled, with errors included in the result. Timed practice offers 30/60/120 seconds and advances to another verse. Time spent loading the next verse is excluded. If a transition fails, the session stops without saving an incomplete score; use Next verse to start again.
 
-A session starts with the first entered character. Verse practice ends when all positions are filled (errors are allowed and reported). WPM is currently correct characters divided by five, divided by elapsed minutes. Accuracy measures correct insertion attempts / all insertion attempts; fixing an error does not erase the original mistake. The timer continues while the tab is in the background or a dialog is open. Switching modes, books, or verses resets the current session.
+Escape restarts, Alt+Enter chooses a new verse. Pasting and dropping text into practice is disabled. WPM uses currently correct characters / 5 / elapsed minutes. Accuracy counts all insertion attempts, including corrected mistakes. Whitespace and typographic punctuation are normalized for keyboard entry; words are not rewritten.
 
-## Content and attribution
+Scores (up to 100) and theme preference are saved in browser localStorage. Existing WEB results retain their translation label. Scripture text is not saved to disk or localStorage. API responses use `Cache-Control: no-store`. API.Bible's required fair-use tracker is loaded when Scripture with tracking metadata is displayed; score history is not sent to that tracker. Copyright information returned by the provider is displayed below the passage.
 
-Scripture is from the public-domain World English Bible Classic: https://ebible.org/eng-web/ . The source chapters are Psalms 23, Proverbs 1, John 1, and 1 Corinthians 1. Verse references link to the source chapter. Line breaks are collapsed and curly apostrophes normalized for ordinary keyboards. This is a curated library, not the complete Bible. Add passages in `verses.js` and their source chapter mapping in `app.js` as needed.
+## Files
 
-## Project layout
+- `index.html`, `style.css`, `app.js`: responsive UI and practice logic
+- `books.js`: 66-book catalog (metadata only)
+- `source.js`: browser data access and provider view reporting
+- `bible-api.js`: private server-side API.Bible adapter
+- `server.js`: localhost server and restricted endpoints
+- `engine.js`: scoring helpers
+- `*.test.js`: scoring, canon, and mocked provider tests
+- `.env.example`: configuration template; `.env` is ignored by Git
 
-- `index.html` — page structure and dialogs
-- `style.css` — responsive themes and typography
-- `app.js` — session behavior, library, preferences, history
-- `engine.js` — scoring helpers
-- `verses.js` — curated Scripture
-- `engine.test.js` — scoring and content checks
-- `server.js` — dependency-free local development server
+## Verification and deployment
 
-## Version control and hosting
+Automated API tests use synthetic fixtures, not NIV text. Live authenticated retrieval cannot be verified until credentials with NIV access are configured. The app must run with its Node server; it is no longer a static-only site. The development server binds to localhost. Before public hosting, use a production backend with appropriate rate limits and the provider license for your audience/use.
 
-The project uses Git. Review changes with `git status` and `git diff`, then save them with `git add .` and `git commit`. No remote repository or public deployment is configured. To deploy on static hosting, publish `index.html`, `style.css`, `app.js`, `engine.js`, and `verses.js` together; no build command is needed. The included server binds only to localhost and is for local development.
+Provider documentation: https://docs.api.bible/ . NIV permissions: https://www.biblica.com/permissions/ . Git is initialized locally; no remote or deployment is configured.
