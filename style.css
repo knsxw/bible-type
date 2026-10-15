@@ -18,4 +18,11 @@
 footer{flex-wrap:wrap}
 @media(max-width:700px){.book-picker{min-width:145px}.book-menu{left:auto;right:0;width:280px}.toolbar{max-width:100%}}
 
-.credit-heart{display:inline-block;width:13px;height:13px;fill:var(--accent);vertical-align:-2px;margin:0 2px}footer{margin-top:48px}
+.credit-heart{display:inline-block;width:13px;height:13px;fill:var(--accent);vertical-align:-2px;margin:0 2px}
+
+.daily-note{display:flex;align-items:center;justify-content:center;gap:17px;margin:65px 0 60px}
+.star{font-size:36px;color:var(--accent);opacity:.7}
+.daily-note .eyebrow{font-size:9px;color:var(--muted);letter-spacing:1.5px}
+.daily-note p{color:var(--faint);font-family:Georgia,serif;font-style:italic;font-size:15px;margin:8px 0}
+@media(min-width:1400px){.daily-note{margin-top:90px}}
+@media(max-width:700px){.daily-note{margin:45px 0;text-align:left}.daily-note p{font-size:14px;line-height:1.5}}
