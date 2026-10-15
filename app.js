@@ -13,7 +13,7 @@ function pool(){return verses.filter(v=>$('#book').value==='all'||v.book===$('#b
 function pick(){const choices=pool().filter(v=>v.id!==current.id);return choices[Math.floor(Math.random()*choices.length)]||current;}
 function paint(){
  const fragment=document.createDocumentFragment();let index=0;
- for(const word of current.text.split(/( )/)){
+ for(const word of current.text.match(/\S+ ?/g)){
   const group=document.createElement('span');group.className='word';
   for(const char of word){const span=document.createElement('span');span.textContent=char;span.className='char'+(index<input.value.length?(char===input.value[index]?' correct':' incorrect'):'')+(index===input.value.length?' cursor':'');group.append(span);index++;}fragment.append(group);
  }
