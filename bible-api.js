@@ -20,7 +20,7 @@ export function createBibleAPI({key,bibleId,fetcher=fetch}) {
   }
   async function verify(){
     if(!verified)verified=request('').then(({data})=>{
-      if(!data || !/\bNIV\b/i.test(data.abbreviation||'') || data.language?.id!=='eng')throw new BibleError('Select an English NIV edition in NIV_BIBLE_ID. Other translations are not accepted.',503);
+      if(!data || !/^NIV(?:\d{2,4})?$/i.test(data.abbreviation||'') || data.language?.id!=='eng')throw new BibleError('Select an English NIV edition in NIV_BIBLE_ID. Other translations are not accepted.',503);
       return data;
     }).catch(error=>{verified=null;throw error;});
     return verified;

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createBibleAPI} from './bible-api.js';
 import {books} from './books.js';
 const reply=(data,meta)=>({ok:true,json:async()=>({data,meta})});
-const metadata={abbreviation:'NIV',language:{id:'eng'}};
+const metadata={abbreviation:'NIV11',language:{id:'eng'}};
 test('missing credentials gives a browsable catalog, never substitutes text',async()=>{
  const api=createBibleAPI({fetcher:()=>{throw new Error('must not fetch');}});
  assert.equal((await api.catalog()).configured,false);
