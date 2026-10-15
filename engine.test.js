@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {metrics,compare,changedText} from './engine.js';
+import {verses} from './verses.js';
+test('WPM uses correct characters and five characters per word',()=>assert.deepEqual(metrics(250,260,10,60),{wpm:50,accuracy:96}));
+test('idle session is finite',()=>assert.deepEqual(metrics(0,0,0,0),{wpm:0,accuracy:100}));
+test('mistakes count by position, including spaces',()=>assert.equal(compare('God is good.','God xs good.'),11));
+test('backspace does not add attempts; correction does',()=>{assert.deepEqual(changedText('Godx','God'),{start:3,added:''});assert.deepEqual(changedText('God','God '),{start:3,added:' '});});
+test('all curated verses have unique references and keyboard-friendly text',()=>{assert.equal(new Set(verses.map(v=>v.ref)).size,verses.length);for(const verse of verses){assert.ok(verse.text.length>0);assert.match(verse.text,/^[\x20-\x7E]+$/);}});
