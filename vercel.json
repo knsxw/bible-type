@@ -1,0 +1,20 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": null,
+    "buildCommand": "node build.mjs",
+    "outputDirectory": "public",
+    "rewrites": [
+        {
+            "source": "/api/books",
+            "destination": "/api/bible?action=books"
+        },
+        {
+            "source": "/api/verses",
+            "destination": "/api/bible?action=verses"
+        },
+        {
+            "source": "/api/verse",
+            "destination": "/api/bible?action=verse"
+        }
+    ]
+}
